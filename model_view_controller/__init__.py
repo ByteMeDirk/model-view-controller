@@ -19,7 +19,8 @@ def cli():
 @cli.command()
 @click.argument("path")
 @click.option("--path", "-p")
-def build(path):
+@click.option("--force", is_flag=True, help="Force update even if table has data", default=False)
+def build(path, force):
     """Build database schema based on model configurations."""
     try:
         config = get_config(path=path)
@@ -28,13 +29,25 @@ def build(path):
             config["database"]["schema"],
         )
         models_paths = get_model_configs(path=path)
-
         engine = create_engine(connection_string)
         inspector = inspect(engine)
 
         with engine.begin() as connection:
+            # Process existing models
             for model_path in models_paths:
-                process_model(connection, inspector, schema, model_path)
+                process_model(connection, inspector, schema, model_path, force)
+
+            # Check for tables to drop
+            existing_tables = set(inspector.get_table_names(schema=schema))
+            model_tables = set(model_path.split("/")[-1].split(".")[0] for model_path in models_paths)
+            tables_to_drop = existing_tables - model_tables
+
+            for table_name in tables_to_drop:
+                if force:
+                    connection.execute(text(f"DROP TABLE IF EXISTS {schema}.{table_name}"))
+                    logging.info(f"Dropped table {table_name}")
+                else:
+                    logging.warning(f"Table {table_name} exists in database but not in configs. Use --force to drop.")
 
         # Force a new connection to see changes
         with engine.connect() as connection:
@@ -49,11 +62,11 @@ def build(path):
         logging.error("An error occurred: %s", str(e))
         raise
 
-
 @cli.command()
 @click.argument("path")
 @click.option("--path", "-p")
-def drop(path):
+@click.option("--force", is_flag=True, help="Force drop without confirmation")
+def drop(path, force):
     """Drop all tables from the database schema."""
     try:
         config = get_config(path=path)
@@ -64,6 +77,13 @@ def drop(path):
         engine = create_engine(connection_string)
         metadata = MetaData(schema=schema)
         metadata.reflect(bind=engine)
+
+        if not force:
+            confirmation = input("Are you sure you want to drop all tables? Type 'yes' to confirm: ")
+            if confirmation.lower() != 'yes':
+                logging.info("Operation cancelled.")
+                return
+
         metadata.drop_all(bind=engine)
         logging.info("Successfully dropped all tables from schema: %s", schema)
     except Exception as e:

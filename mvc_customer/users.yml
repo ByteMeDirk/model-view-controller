@@ -1,0 +1,17 @@
+columns:
+  - name: id
+    type: integer
+    primary_key: true
+    auto_increment: true
+  - name: name
+    type: string
+    length: 100
+  - name: email
+    type: string
+    length: 100
+  - name: password
+    type: string
+    length: 100
+  - name: created_at
+    type: timestamp
+description: "Users table"

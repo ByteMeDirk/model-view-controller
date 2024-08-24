@@ -19,8 +19,9 @@ def cli():
 @cli.command()
 @click.argument("path")
 @click.option("--path", "-p")
-@click.option("--force", is_flag=True, help="Force update even if table has data", default=False)
-def build(path, force):
+@click.option("--force", is_flag=True, help="Force column deletion even if it contains data", default=False)
+@click.option("--drop-tables", is_flag=True, help="Drop tables that exist in database but not in configs", default=False)
+def build(path, force, drop_tables):
     """Build database schema based on model configurations."""
     try:
         config = get_config(path=path)
@@ -43,11 +44,16 @@ def build(path, force):
             tables_to_drop = existing_tables - model_tables
 
             for table_name in tables_to_drop:
-                if force:
+                if drop_tables:
                     connection.execute(text(f"DROP TABLE IF EXISTS {schema}.{table_name}"))
                     logging.info(f"Dropped table {table_name}")
                 else:
-                    logging.warning(f"Table {table_name} exists in database but not in configs. Use --force to drop.")
+                    user_input = input(f"Table {table_name} exists in database but not in configs. Drop it? (y/n): ")
+                    if user_input.lower() == 'y':
+                        connection.execute(text(f"DROP TABLE IF EXISTS {schema}.{table_name}"))
+                        logging.info(f"Dropped table {table_name}")
+                    else:
+                        logging.warning(f"Table {table_name} was not dropped. Use --drop-tables to drop automatically.")
 
         # Force a new connection to see changes
         with engine.connect() as connection:

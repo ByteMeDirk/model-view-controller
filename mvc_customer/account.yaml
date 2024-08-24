@@ -12,9 +12,6 @@ columns:
   - name: city
     type: string
     length: 100
-  - name: state
-    type: string
-    length: 100
   - name: zip
     type: string
     length: 100

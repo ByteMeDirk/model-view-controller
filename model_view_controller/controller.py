@@ -102,6 +102,7 @@ def update_existing_table(connection, inspector, schema, table_name, model_class
         table_name=table_name,
         model_columns=model_columns,
         existing_columns=existing_columns,
+        force=force,
     )
     update_column_types(
         connection=connection,
@@ -125,7 +126,10 @@ def add_new_columns(connection, schema, table_name, model_columns, existing_colu
                 f"Added new column {col_name} to table {table_name}",
             )
 
-def remove_deleted_columns(connection, schema, table_name, model_columns, existing_columns, force):
+
+def remove_deleted_columns(
+        connection, schema, table_name, model_columns, existing_columns, force
+):
     """Remove deleted columns from the table."""
     for col_name in existing_columns:
         if col_name not in model_columns:
@@ -153,22 +157,6 @@ def has_data(connection, schema, table_name, column_name):
     query = text(f"SELECT COUNT(*) FROM {schema}.{table_name} WHERE {column_name} IS NOT NULL")
     result = connection.execute(query).scalar()
     return result > 0
-
-
-def remove_deleted_columns(
-        connection, schema, table_name, model_columns, existing_columns
-):
-    """Remove deleted columns from the table."""
-    for col_name in existing_columns:
-        if col_name not in model_columns:
-            column_deletion = (
-                f"ALTER TABLE {schema}.{table_name} DROP COLUMN {col_name}"
-            )
-            execute_sql(
-                connection,
-                column_deletion,
-                f"Deleted column {col_name} from table {table_name}",
-            )
 
 
 def update_column_types(

@@ -12,6 +12,4 @@ columns:
   - name: password
     type: string
     length: 100
-  - name: created_at
-    type: timestamp
 description: "Users table"

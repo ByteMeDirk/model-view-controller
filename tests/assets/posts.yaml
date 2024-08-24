@@ -1,0 +1,13 @@
+columns:
+  - name: id
+    type: integer
+    primary_key: true
+    auto_increment: true
+  - name: title
+    type: string
+    length: 200
+  - name: content
+    type: text
+  - name: user_id
+    type: integer
+description: "Blog post details"

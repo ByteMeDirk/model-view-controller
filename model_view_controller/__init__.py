@@ -1,7 +1,9 @@
 import logging
+from typing import Dict, Any, List
 
 import click
 from sqlalchemy import create_engine, inspect, text, MetaData
+from sqlalchemy.engine import Engine
 
 from model_view_controller.controller import process_model
 from .config import read_yaml_file, get_model_configs, get_config
@@ -12,25 +14,41 @@ logging.basicConfig(level=logging.INFO)
 
 @click.group()
 def cli():
-    """Main CLI group."""
+    """Main CLI group for model_view_controller operations."""
     pass
 
 
 @cli.command()
 @click.argument("path")
-@click.option("--path", "-p")
-@click.option("--force", is_flag=True, help="Force column deletion even if it contains data", default=False)
-@click.option("--drop-tables", is_flag=True, help="Drop tables that exist in database but not in configs", default=False)
-def build(path, force, drop_tables):
-    """Build database schema based on model configurations."""
+@click.option(
+    "--force",
+    is_flag=True,
+    help="Force column deletion even if it contains data",
+    default=False,
+)
+@click.option(
+    "--drop-tables",
+    is_flag=True,
+    help="Drop tables that exist in database but not in configs",
+    default=False,
+)
+def build(path: str, force: bool, drop_tables: bool) -> None:
+    """
+    Build database schema based on model configurations.
+
+    Args:
+        path (str): Path to the configuration directory
+        force (bool): Force column deletion even if it contains data
+        drop_tables (bool): Drop tables that exist in database but not in configs
+    """
     try:
-        config = get_config(path=path)
+        config: Dict[str, Any] = get_config(path=path)
         connection_string, schema = (
             config["database"]["connection"],
             config["database"]["schema"],
         )
-        models_paths = get_model_configs(path=path)
-        engine = create_engine(connection_string)
+        models_paths: List[str] = get_model_configs(path=path)
+        engine: Engine = create_engine(connection_string)
         inspector = inspect(engine)
 
         with engine.begin() as connection:
@@ -39,26 +57,36 @@ def build(path, force, drop_tables):
                 process_model(connection, inspector, schema, model_path, force)
 
             # Check for tables to drop
-            existing_tables = set(inspector.get_table_names(schema=schema))
-            model_tables = set(model_path.split("/")[-1].split(".")[0] for model_path in models_paths)
-            tables_to_drop = existing_tables - model_tables
+            existing_tables: set = set(inspector.get_table_names(schema=schema))
+            model_tables: set = set(
+                model_path.split("/")[-1].split(".")[0] for model_path in models_paths
+            )
+            tables_to_drop: set = existing_tables - model_tables
 
             for table_name in tables_to_drop:
                 if drop_tables:
-                    connection.execute(text(f"DROP TABLE IF EXISTS {schema}.{table_name}"))
+                    connection.execute(
+                        text(f"DROP TABLE IF EXISTS {schema}.{table_name}")
+                    )
                     logging.info(f"Dropped table {table_name}")
                 else:
-                    user_input = input(f"Table {table_name} exists in database but not in configs. Drop it? (y/n): ")
-                    if user_input.lower() == 'y':
-                        connection.execute(text(f"DROP TABLE IF EXISTS {schema}.{table_name}"))
+                    user_input: str = input(
+                        f"Table {table_name} exists in database but not in configs. Drop it? (y/n): "
+                    )
+                    if user_input.lower() == "y":
+                        connection.execute(
+                            text(f"DROP TABLE IF EXISTS {schema}.{table_name}")
+                        )
                         logging.info(f"Dropped table {table_name}")
                     else:
-                        logging.warning(f"Table {table_name} was not dropped. Use --drop-tables to drop automatically.")
+                        logging.warning(
+                            f"Table {table_name} was not dropped. Use --drop-tables to drop automatically."
+                        )
 
         # Force a new connection to see changes
         with engine.connect() as connection:
             for model_path in models_paths:
-                table_name = model_path.split("/")[-1].split(".")[0]
+                table_name: str = model_path.split("/")[-1].split(".")[0]
                 result = connection.execute(
                     text(f"SELECT * FROM {schema}.{table_name} LIMIT 0")
                 )
@@ -68,25 +96,33 @@ def build(path, force, drop_tables):
         logging.error("An error occurred: %s", str(e))
         raise
 
+
 @cli.command()
 @click.argument("path")
-@click.option("--path", "-p")
 @click.option("--force", is_flag=True, help="Force drop without confirmation")
-def drop(path, force):
-    """Drop all tables from the database schema."""
+def drop(path: str, force: bool) -> None:
+    """
+    Drop all tables from the database schema.
+
+    Args:
+        path (str): Path to the configuration directory
+        force (bool): Force drop without confirmation
+    """
     try:
-        config = get_config(path=path)
+        config: Dict[str, Any] = get_config(path=path)
         connection_string, schema = (
             config["database"]["connection"],
             config["database"]["schema"],
         )
-        engine = create_engine(connection_string)
+        engine: Engine = create_engine(connection_string)
         metadata = MetaData(schema=schema)
         metadata.reflect(bind=engine)
 
         if not force:
-            confirmation = input("Are you sure you want to drop all tables? Type 'yes' to confirm: ")
-            if confirmation.lower() != 'yes':
+            confirmation: str = input(
+                "Are you sure you want to drop all tables? Type 'yes' to confirm: "
+            )
+            if confirmation.lower() != "yes":
                 logging.info("Operation cancelled.")
                 return
 

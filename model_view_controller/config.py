@@ -1,12 +1,13 @@
 import logging
 from glob import glob
+from typing import Dict, List, Any
 
 import yaml
 
 logging.basicConfig(level=logging.INFO)
 
 
-def read_yaml_file(file_path: str) -> dict:
+def read_yaml_file(file_path: str) -> Dict[str, Any]:
     """
     Read a YAML file and return its contents.
 
@@ -14,13 +15,13 @@ def read_yaml_file(file_path: str) -> dict:
         file_path (str): Path to the YAML file
 
     Returns:
-        dict: Contents of the YAML file
+        Dict[str, Any]: Contents of the YAML file
     """
     with open(file_path, "r") as file:
         return yaml.safe_load(file)
 
 
-def get_model_configs(path: str) -> list:
+def get_model_configs(path: str) -> List[str]:
     """
     Get all YAML model configuration files in the given path.
 
@@ -28,9 +29,9 @@ def get_model_configs(path: str) -> list:
         path (str): Directory path to search for model configs
 
     Returns:
-        list: List of paths to model configuration files
+        List[str]: List of paths to model configuration files
     """
-    files = []
+    files: List[str] = []
     for model_file in glob(f"{path}/*.y*ml"):
         if model_file != f"{path}/config.yaml":
             files.append(model_file)
@@ -38,7 +39,7 @@ def get_model_configs(path: str) -> list:
     return files
 
 
-def get_config(path: str) -> dict:
+def get_config(path: str) -> Dict[str, Any]:
     """
     Get the main configuration from the config.yaml file.
 
@@ -46,12 +47,12 @@ def get_config(path: str) -> dict:
         path (str): Directory path containing the config.yaml file
 
     Returns:
-        dict: Configuration data
+        Dict[str, Any]: Configuration data
 
     Raises:
         FileNotFoundError: If config.yaml is not found in the given path
     """
-    config_path = f"{path}/config.yaml"
+    config_path: str = f"{path}/config.yaml"
     try:
         return read_yaml_file(config_path)
     except FileNotFoundError:

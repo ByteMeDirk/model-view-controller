@@ -1,0 +1,13 @@
+name: erasure_request
+description: User request data erasure
+schema: {{ "dev_" if environment == "dev" else "" }}customer
+columns:
+  - name: id
+    type: int
+    primary_key: true
+  - name: user_id
+    type: int
+  - name: request_date
+    type: date
+  - name: status
+    type: varchar

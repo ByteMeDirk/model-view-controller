@@ -9,6 +9,8 @@ setup(
         "Click",
         "sqlalchemy",
         "PyYAML",
+        "Jinja2",
+        "schema",
     ],
     entry_points="""
         [console_scripts]

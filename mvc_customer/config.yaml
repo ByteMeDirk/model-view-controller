@@ -1,3 +1,0 @@
-database:
-  connection: "postgresql://postgres:postgres@localhost:5432/postgres"
-  schema: "public"

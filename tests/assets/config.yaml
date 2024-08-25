@@ -1,3 +1,0 @@
-database:
-  connection: "sqlite:///:memory:"
-  schema: "public"

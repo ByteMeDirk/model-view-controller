@@ -141,7 +141,7 @@ def read_and_parse_config(config_file: str) -> Tuple[Dict, Dict, Dict]:
 
 
 def read_and_parse_workspace_files(
-    workspace_files: List[str], config_context: Dict, config_connection: Dict
+        workspace_files: List[str], config_context: Dict, config_connection: Dict
 ) -> Dict:
     """
     Read and parse the workspace files.

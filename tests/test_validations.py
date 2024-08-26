@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import patch
+
 from model_view_controller.validations import validate_config_file, validate_table_file
 
 

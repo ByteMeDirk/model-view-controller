@@ -2,7 +2,7 @@ import logging
 from typing import Dict
 
 import yaml
-from sqlalchemy import create_engine, Engine
+from sqlalchemy import create_engine, Engine, Table, MetaData, Column, inspect, text
 from sqlalchemy import types
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -124,6 +124,41 @@ class ModelManager:
             return DATA_TYPES[config_type](length=length)
         return DATA_TYPES[config_type]
 
+    def generate_table_object(self):
+        for full_table_name, table_config in self.workstate.items():
+            db_name, schema_name, table_name = full_table_name.split(".")
+            columns = table_config.get("columns")
+            metadata = MetaData(schema=schema_name)
+            table_columns = []
+            for column in columns:
+                column_type = self.get_data_type(column.get("type"), column.get("length"))
+                column_args = {
+                    "name": column.get("name"),
+                    "type_": column_type,
+                    "primary_key": column.get("primary_key", False),
+                    "autoincrement": column.get("auto_increment", False),
+                    "nullable": column.get("nullable", False),
+                    "unique": column.get("unique", False),
+                }
+                table_columns.append(Column(**column_args))
+
+            table = Table(
+                table_name, metadata, *table_columns, comment=table_config.get("comment", "")
+            )
+            class_attrs = {
+                "__table__": table,
+                "__tablename__": table_name,
+                "__schema__": schema_name,
+            }
+            yield type(table_name, (Model,), class_attrs)
+
+    def create_schema(self, connection, schema_name: str):
+        """
+        Checks if a schema exists and creates it if it doesn't.
+        """
+        logging.info(f"Creating schema: {schema_name}")
+        connection.execute(text(f"CREATE SCHEMA IF NOT EXISTS {schema_name}"))
+
     def build(self):
         """
         Build the workspace.
@@ -132,7 +167,10 @@ class ModelManager:
         db_connection = self.config.get("connection")
         del db_connection["type"]
         engine = self.get_connection(db_type=db_type, **db_connection)
+        inspect(engine)
 
-        for full_table_name, table_config in self.workstate.items():
-            db_name, schema_name, table_name = full_table_name.split(".")
-            db_columns = table_config.get("columns")
+        with engine.begin() as connection:
+            for table in self.generate_table_object():
+                logging.info(f"Creating table: {table.__tablename__} in schema: {table.__schema__}")
+                self.create_schema(connection, table.__schema__)
+                table.__table__.create(connection)

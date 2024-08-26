@@ -33,17 +33,31 @@ def plan(path: str) -> None:
 @click.option(
     "--force",
     is_flag=True,
-    help="Force column deletion even if it contains data",
+    help="Force column or table deletion even if it contains data",
     default=False,
 )
 def build(path: str, force: bool) -> None:
+    """
+    Build workspace from state file.
+
+    Args:
+        path (str): The path to the workspace.
+        force (bool): Force column or table deletion even if it contains data.
+    """
     pass
 
 
 @cli.command()
 @click.argument("path")
 @click.option("--force", is_flag=True, help="Force drop without confirmation")
-def drop(path: str, force: bool) -> None:
+def destroy(path: str, force: bool) -> None:
+    """
+    Destroy workspace from state file.
+
+    Args:
+        path (str): The path to the workspace.
+        force (bool): Force drop without confirmation.
+    """
     pass
 
 

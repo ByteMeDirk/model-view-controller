@@ -11,3 +11,5 @@ columns:
     type: date
   - name: status
     type: varchar
+  - name: reason
+    type: varchar

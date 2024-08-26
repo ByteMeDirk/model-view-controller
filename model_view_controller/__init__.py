@@ -3,6 +3,7 @@ import logging
 import click
 
 from model_view_controller.config import generate_workspace_state_file
+from model_view_controller.model import ModelManager
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,6 +26,7 @@ def plan(path: str) -> None:
     Returns:
         str: The path to the generated workspace state file.
     """
+    logging.info(f"Generating workspace state file for {path}")
     generate_workspace_state_file(workspace_path=path)
 
 
@@ -44,7 +46,11 @@ def build(path: str, force: bool) -> None:
         path (str): The path to the workspace.
         force (bool): Force column or table deletion even if it contains data.
     """
-    pass
+    logging.info(f"Building workspace from state file: {path}")
+    model_manager: ModelManager = ModelManager(
+        workspace_path=path
+    )
+    model_manager.build()
 
 
 @cli.command()
@@ -58,7 +64,7 @@ def destroy(path: str, force: bool) -> None:
         path (str): The path to the workspace.
         force (bool): Force drop without confirmation.
     """
-    pass
+    logging.info(f"Destroying workspace from state file: {path}")
 
 
 if __name__ == "__main__":

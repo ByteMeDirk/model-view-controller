@@ -6,8 +6,10 @@ columns:
     type: int
     primary_key: true
   - name: name
-    type: varchar
+    type: varchar(255)
   - name: email
     type: varchar
   - name: dob
     type: date
+  - name: created_at
+    type: timestamp

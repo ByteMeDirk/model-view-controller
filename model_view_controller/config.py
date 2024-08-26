@@ -164,6 +164,10 @@ def read_and_parse_workspace_files(
         workspace_file_data["database"] = config_connection.get("database")
         table_path = f"{config_connection.get('database')}.{workspace_file_data.get('schema')}.{workspace_file_data.get('name')}"
         workspace_files_data[table_path] = workspace_file_data
+        del workspace_files_data[table_path]["database"]
+        del workspace_files_data[table_path]["schema"]
+        del workspace_files_data[table_path]["name"]
+
     return workspace_files_data
 
 
